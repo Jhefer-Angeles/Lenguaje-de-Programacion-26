@@ -93,6 +93,7 @@ class Paciente(Persona):
     def coincide_DNI(self, DNI):
         consulta = hashlib.sha256(DNI.strip().encode("utf-8")).hexdigest()
         return self.__DNI_hash == consulta
+
     @property
     def DNI_hash(self):
         return self.__DNI_hash
@@ -102,8 +103,9 @@ class Paciente(Persona):
             "nombres": self.nombres,
             "apellidos": self.apellidos,
             "DNI_hash": self.__DNI_hash,
+            "DNI_referencia": self.__DNI_referencia,
             "fecha_nacimiento": self.fecha_nacimiento,
-            "telefono": self.telefono
+            "telefono": self.telefono,
         }
 
     @classmethod
@@ -112,8 +114,8 @@ class Paciente(Persona):
         p.nombres = d["nombres"]
         p.apellidos = d["apellidos"]
         p.__DNI_hash = d["DNI_hash"]
-        p.__DNI_referencia = d ["DNI_referencia"]
-        p.__fecha_nacimiento = datetime.striptime(d["fecha_nacimiento"], "%d/%m/%Y")
+        p.__DNI_referencia = d.get("DNI_referencia", "***")
+        p.__fecha_nacimiento = datetime.strptime(d["fecha_nacimiento"], "%d/%m/%Y")
         p.telefono = d["telefono"]
         return p
 
@@ -165,9 +167,9 @@ class Cita:
         self.__estado = valor
 
     def a_diccionario(self):
-        return{
+        return {
             "DNI_hash": self.__paciente.DNI_hash,
-            "fecha_hora": self.__fecha_hora.striftime("%d/%m/%Y %H:%M"),
+            "fecha_hora": self.__fecha_hora.strftime("%d/%m/%Y %H:%M"),
             "especialidad": self.__especialidad,
             "estado": self.__estado,
         }
@@ -189,29 +191,29 @@ class Repositorio:
 
     def __new__(cls):
         if cls._instancia is None:
-            cls._intancia = super().__new__(cls)
-            cls.instancia.pacientes =[]
-            cls.instancia.citas = []
+            cls._instancia = super().__new__(cls)
+            cls._instancia.pacientes = []
+            cls._instancia.citas = []
         return cls._instancia
 
     def guardar(self):
-        datos ={
+        datos = {
             "pacientes": [p.a_diccionario() for p in self.pacientes],
-            "citas": [c.a_diccionario( )for c in self.citas],
+            "citas": [c.a_diccionario() for c in self.citas],
         }
-        with open(self.ARCHIVO, "W", enconding="utf-8")as f:
-                  json.dump(datos, f, ensure_ascii=False, indent=2)
+        with open(self.ARCHIVO, "w", encoding="utf-8") as f:
+            json.dump(datos, f, ensure_ascii=False, indent=2)
 
     def cargar(self):
         if not os.path.exists(self.ARCHIVO):
             return
-        with open(self.AECHIVO, "r", enconding="utf-8") as f:
+        with open(self.ARCHIVO, "r", encoding="utf-8") as f:
             datos = json.load(f)
         self.pacientes.clear()
         self.citas.clear()
         for d in datos.get("pacientes", []):
             self.pacientes.append(Paciente.desde_diccionario(d))
-        por_hash= {p.DNI_hash: p for p in self.pacientes}
+        por_hash = {p.DNI_hash: p for p in self.pacientes}
         for d in datos.get("citas", []):
             paciente = por_hash.get(d["DNI_hash"])
             if paciente:
@@ -386,7 +388,7 @@ class Aplicacion:
             ("edad", "Edad"), ("especialidad", "Especialidad"), ("estado", "Estado")
         ]:
             self.tabla_citas.heading(col, text=titulo)
-        self.tabla_citas.column("edad", width=60, anchor="center")
+        self.tabla_citas.column("edad", width=80, anchor="center")
         self.tabla_citas.pack(fill="both", expand=True, pady=10)
 
     def _crear_reportes(self):
@@ -409,9 +411,9 @@ class Aplicacion:
                 self.apellidos.get(),
                 self.DNI.get(),
                 self.Fecha_de_nacimiento.get(),
-                self.telefono.get(),
-                self.servicio.repositorio.guardar()
+                self.telefono.get()
             )
+            self.servicio.repositorio.guardar()
             messagebox.showinfo("Correcto", "Paciente registrado.")
             for variable in (
                 self.nombres, self.apellidos, self.DNI,
@@ -430,9 +432,9 @@ class Aplicacion:
         try:
             self.servicio.registrar_cita(
                 self.DNI_cita.get(), self.fecha.get(),
-                self.hora.get(), self.especialidad.get(),
-                self.servicio.repositorio.guardar()
+                self.hora.get(), self.especialidad.get()
             )
+            self.servicio.repositorio.guardar()
             messagebox.showinfo("Correcto", "Cita registrada.")
             for variable in (
                 self.DNI_cita, self.fecha, self.hora, self.especialidad
@@ -486,6 +488,7 @@ class Aplicacion:
             f"Citas atendidas: {atendidas}\n\n"
             "AGENDA DE CITAS MEDICAS"
         ))
+
 class PruebasSistemaRural(unittest.TestCase):
     def setUp(self):
         self.repo = Repositorio()
@@ -539,6 +542,7 @@ class PruebasSistemaRural(unittest.TestCase):
         hoy = datetime.now()
         esperado = hoy.year - 1990 - ((hoy.month, hoy.day) < (1, 1))
         self.assertEqual(self.registrar().edad, esperado)
+
 if __name__ == "__main__":
     import sys
     if "--test" in sys.argv:

@@ -62,12 +62,12 @@ class Paciente(Persona):
 
         self.__fecha_nacimiento = fecha
         self.__DNI_hash = hashlib.sha256(DNI.encode("utf-8")).hexdigest()
-        self.__DNI_referencia = "***" + DNI[-2:]
+        self.__DNI_completo = DNI
         self.telefono = telefono
 
     @property
     def DNI(self):
-        return self.__DNI_referencia
+        return self.__DNI_completo
 
     @property
     def fecha_nacimiento(self):
@@ -103,7 +103,7 @@ class Paciente(Persona):
             "nombres": self.nombres,
             "apellidos": self.apellidos,
             "DNI_hash": self.__DNI_hash,
-            "DNI_referencia": self.__DNI_referencia,
+            "DNI": self.__DNI_completo,
             "fecha_nacimiento": self.fecha_nacimiento,
             "telefono": self.telefono,
         }
@@ -114,7 +114,7 @@ class Paciente(Persona):
         p.nombres = d["nombres"]
         p.apellidos = d["apellidos"]
         p.__DNI_hash = d["DNI_hash"]
-        p.__DNI_referencia = d.get("DNI_referencia", "***")
+        p.__DNI_completo = d.get("DNI_referencia", "***")
         p.__fecha_nacimiento = datetime.strptime(d["fecha_nacimiento"], "%d/%m/%Y")
         p.telefono = d["telefono"]
         return p
@@ -278,7 +278,7 @@ class Aplicacion:
     def _construir_interfaz(self):
         ttk.Label(
             self.ventana, text="SISTEMARURAL-PE",
-            font=("Arial", 18, "bold")
+            font=("Times New Roman", 18, "bold")
         ).pack(pady=8)
         ttk.Label(
             self.ventana,
@@ -391,10 +391,15 @@ class Aplicacion:
         self.tabla_citas.column("edad", width=80, anchor="center")
         self.tabla_citas.pack(fill="both", expand=True, pady=10)
 
+        ttk.Button(        
+    self.tab_citas, text="Marcar Como Atendida",
+    command=self.evento_marcar_atendida
+).pack(pady=(0,1))
+
     def _crear_reportes(self):
         ttk.Label(
             self.tab_reportes, text="Resumen de atención",
-            font=("Arial", 14, "bold")
+            font=("Times New Roman", 14, "bold")
         ).pack(anchor="w", pady=8)
         self.reporte = ttk.Label(self.tab_reportes, text="", justify="left")
         self.reporte.pack(anchor="w", pady=8)
@@ -403,7 +408,7 @@ class Aplicacion:
             command=self.actualizar_reporte
         ).pack(anchor="w")
         self.actualizar_reporte()
-
+        
     def evento_registrar_paciente(self):
         try:
             self.servicio.registrar_paciente(
@@ -442,6 +447,29 @@ class Aplicacion:
                 variable.set("")
             self.actualizar_citas()
             self.actualizar_reporte()
+        except ErrorValidacion as error:
+            messagebox.showwarning("Validación", str(error))
+        except Exception as error:
+            messagebox.showerror("Error", str(error))
+
+    def evento_marcar_atendida(self):
+        seleccion = self.tabla_citas.selection()
+        if not seleccion:
+            messagebox.showwarning(
+                "Validación", "Seleccione una cita de la tabla."
+            )
+            return
+        try:
+            indice = self.tabla_citas.index(seleccion[0])
+            cita = self.servicio.repositorio.citas[indice]
+            if cita.estado == "Atendida":
+                messagebox.showinfo("Información", "Esa cita ya fue atendida.")
+                return
+            cita.estado = "Atendida"
+            self.servicio.repositorio.guardar()
+            self.actualizar_citas()
+            self.actualizar_reporte()
+            messagebox.showinfo("Correcto", "Cita marcada como atendida.")
         except ErrorValidacion as error:
             messagebox.showwarning("Validación", str(error))
         except Exception as error:
@@ -507,9 +535,9 @@ class PruebasSistemaRural(unittest.TestCase):
         self.assertTrue(p.coincide_DNI("12345678"))
         self.assertEqual(p.fecha_nacimiento, "01/01/1990")
 
-    def test_DNI_no_expuesto(self):
+    def test_DNI_visible(self):
         p = self.registrar(DNI="87654321")
-        self.assertNotEqual(p.DNI, "87654321")
+        self.assertEqual(p.DNI, "87654321")
         self.assertTrue(p.coincide_DNI("87654321"))
 
     def test_busqueda_filter(self):

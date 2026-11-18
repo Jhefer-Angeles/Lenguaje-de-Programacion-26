@@ -1,3 +1,8 @@
+from datetime import datetime
+
+print(f"fecha y hora:{datetime.now()}")
+print("clase con herencia")
+
 class Comida:
     def preparar(self):
         print("Comida preparada")

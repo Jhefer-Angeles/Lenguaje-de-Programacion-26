@@ -1,0 +1,15 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class curso {
+    private String codigo;
+    private String nombre;
+
+    public curso(String codigo, String nombre) {
+        this.codigo = codigo;
+        this.nombre = nombre;
+    }
+
+    public String getNombre() { return nombre; }
+    public String getCodigo() { return codigo; }
+}

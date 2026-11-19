@@ -67,7 +67,7 @@ class Paciente(Persona):
 
     @property
     def DNI(self):
-        return self.__DNI_completo
+     return self.__DNI_completo
 
     @property
     def fecha_nacimiento(self):
@@ -103,18 +103,18 @@ class Paciente(Persona):
             "nombres": self.nombres,
             "apellidos": self.apellidos,
             "DNI_hash": self.__DNI_hash,
-            "DNI": self.__DNI_completo,
+            "DNI_completo": self.__DNI_completo,
             "fecha_nacimiento": self.fecha_nacimiento,
             "telefono": self.telefono,
         }
-
+    
     @classmethod
     def desde_diccionario(cls, d):
         p = cls.__new__(cls)
         p.nombres = d["nombres"]
         p.apellidos = d["apellidos"]
         p.__DNI_hash = d["DNI_hash"]
-        p.__DNI_completo = d.get("DNI_referencia", "***")
+        p.__DNI_completo = d.get("DNI_completo", d.get("DNI_referencia", "---"))
         p.__fecha_nacimiento = datetime.strptime(d["fecha_nacimiento"], "%d/%m/%Y")
         p.telefono = d["telefono"]
         return p

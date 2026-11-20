@@ -62,12 +62,12 @@ class Paciente(Persona):
 
         self.__fecha_nacimiento = fecha
         self.__DNI_hash = hashlib.sha256(DNI.encode("utf-8")).hexdigest()
-        self.__DNI_completo = DNI
+        self.__DNI_referencia = "****" + DNI[-2:]
         self.telefono = telefono
 
     @property
     def DNI(self):
-     return self.__DNI_completo
+        return self.__DNI_referencia
 
     @property
     def fecha_nacimiento(self):
@@ -103,7 +103,7 @@ class Paciente(Persona):
             "nombres": self.nombres,
             "apellidos": self.apellidos,
             "DNI_hash": self.__DNI_hash,
-            "DNI_completo": self.__DNI_completo,
+            "DNI_referencia": self.__DNI_referencia,
             "fecha_nacimiento": self.fecha_nacimiento,
             "telefono": self.telefono,
         }
@@ -114,7 +114,7 @@ class Paciente(Persona):
         p.nombres = d["nombres"]
         p.apellidos = d["apellidos"]
         p.__DNI_hash = d["DNI_hash"]
-        p.__DNI_completo = d.get("DNI_completo", d.get("DNI_referencia", "---"))
+        p.__DNI_referencia = d.get("DNI_referencia", "****")
         p.__fecha_nacimiento = datetime.strptime(d["fecha_nacimiento"], "%d/%m/%Y")
         p.telefono = d["telefono"]
         return p
@@ -537,7 +537,7 @@ class PruebasSistemaRural(unittest.TestCase):
 
     def test_DNI_visible(self):
         p = self.registrar(DNI="87654321")
-        self.assertEqual(p.DNI, "87654321")
+        self.assertEqual(p.DNI, "87653221")
         self.assertTrue(p.coincide_DNI("87654321"))
 
     def test_busqueda_filter(self):
